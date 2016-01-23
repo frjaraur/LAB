@@ -7,7 +7,7 @@ cn: vmuser
 uid: vmuser
 uidNumber: 16859
 gidNumber: 100
-homeDirectory: /home/adam
+homeDirectory: /home/vmuser
 loginShell: /bin/bash
 gecos: adam
 userPassword: {crypt}x
