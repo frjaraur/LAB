@@ -2,7 +2,14 @@ FROM  ubuntu:precise
 
 MAINTAINER FRJARAUR "frjaraur@gmail.com"
 
+WORKDIR /CARTODB
+
+ENV CARTODBINSTALL WORKDIR
+
 RUN locale-gen en_US.UTF-8 && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+ENV LANG en_US.UTF-8 
+ENV LC_ALL en_US.UTF-8
 
 RUN apt-get update && \
     LC_ALL=en_US.UTF-8 DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
@@ -33,8 +40,8 @@ VOLUME /var/lib/postgresql
 RUN service postgresql restart
 
 # Create CartoDB users
-ADD cartodbfiles/cartodb_install.sh /cartodbfiles/cartodb_install.sh
-ENTRYPOINT ["/cartodbfiles/cartodb_install.sh","create_users"]
+ADD cartodbfiles/cartodb_install.sh cartodbfiles/cartodb_install.sh
+ENTRYPOINT ["cartodbfiles/cartodb_install.sh","create_users"]
 
 # CartoDB postgresql extension
 # This is the first approach, we could use a simplest and update entrypoint with a script that uses git description and get from there the lastest version
@@ -61,7 +68,7 @@ RUN apt-get install -y libxml2-dev	liblwgeom-2.1.8 postgis postgresql-9.3-postgi
  	postgresql-9.3-postgis-scripts
  	
 	
-ENTRYPOINT ["/cartodbfiles/cartodb_install.sh","postgis"]
+ENTRYPOINT ["cartodbfiles/cartodb_install.sh","postgis"]
 
 #RUN service postgresql start && sleep 5
 
@@ -115,9 +122,9 @@ ENV PATH $PATH:/usr/include/gdal
 RUN git clone --recursive https://github.com/CartoDB/cartodb.git && cd cartodb && RAILS_ENV=development bundle install && \
 	npm install &&  pip install --no-use-wheel -r python_requirements.txt
 
-#MAL ENV PATH $PATH:$PWD/node_modules/grunt-cli/bin
+ENV PATH $PATH:$CARTODBINSTALL/cartodb/node_modules/grunt-cli/bin
 RUN cd cartodb && bundle install && bundle exec node_modules/grunt-cli/bin/grunt --environment development
-RUN cd cartodb && config/app_config.yml.sample config/app_config.yml && cp config/database.yml.sample config/database.yml	
+RUN cd cartodb && CP config/app_config.yml.sample config/app_config.yml && cp config/database.yml.sample config/database.yml	
 RUN cd cartodb && RAILS_ENV=development bundle exec rake db:migrate
 RUN cd cartodb && RAILS_ENV=development bundle exec rake db:setup
 
