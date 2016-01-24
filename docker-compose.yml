@@ -1,0 +1,24 @@
+redis:
+    build: ./lab-redis
+    ports: 
+      -  6379
+
+ldap:
+    build: ./lab-ldap
+    ports:
+      -  389
+
+mapapi:
+    build: ./lab-mapapi
+    ports:
+      -  8181
+
+sqlapi:
+    build: ./lab-sqlapi
+    ports:
+      -  8080
+
+pgsql:
+    build: ./lab-pgsql
+    ports:
+      -  5432
