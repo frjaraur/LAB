@@ -79,7 +79,7 @@ ENTRYPOINT ["cartodbfiles/cartodb_install.sh","postgis"]
 ## REDIS
 
 RUN add-apt-repository ppa:cartodb/redis && apt-get update && apt-get install -y redis-server
-ADD cartodbfiles/redis.conf /cetc/redis/redis.conf
+ADD cartodbfiles/redis.conf /etc/redis/redis.conf
 
 
 ## NODEJS
@@ -124,9 +124,11 @@ RUN git clone --recursive https://github.com/CartoDB/cartodb.git && cd cartodb &
 
 ENV PATH $PATH:$CARTODBINSTALL/cartodb/node_modules/grunt-cli/bin
 RUN cd cartodb && bundle install && bundle exec node_modules/grunt-cli/bin/grunt --environment development
-RUN cd cartodb && CP config/app_config.yml.sample config/app_config.yml && cp config/database.yml.sample config/database.yml	
-RUN cd cartodb && RAILS_ENV=development bundle exec rake db:migrate
-RUN cd cartodb && RAILS_ENV=development bundle exec rake db:setup
+RUN cd cartodb && cp config/app_config.yml.sample config/app_config.yml && cp config/database.yml.sample config/database.yml	
+
+
+RUN service redis-server restart && cd cartodb && RAILS_ENV=development bundle exec rake db:migrate
+RUN service redis-server restart && cd cartodb && RAILS_ENV=development bundle exec rake db:setup
 
 
 	
