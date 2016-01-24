@@ -1,10 +1,6 @@
 #
 # Redis Dockerfile
 #
-# https://github.com/dockerfile/redis
-#
-
-# Pull base image.
 FROM ubuntu:precise
 
 ENV LANG en_US.UTF-8 
