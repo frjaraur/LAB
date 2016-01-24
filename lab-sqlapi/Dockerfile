@@ -12,13 +12,17 @@ ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common apt-utils \
-    python-software-properties 
+    DEBIAN_FRONTEND=noninteractive apt-get install -y software-properties-common \
+    apt-utils autoconf binutils-doc bison build-essential flex git \
+    python-software-properties zip wget
 
 
 ## NODEJS
 RUN add-apt-repository ppa:cartodb/nodejs-010 && apt-get update && apt-get -y install nodejs
 
+
+## NODAEMON
+#RUN npm install -g nodaemon
 
 ## SQL API
 
@@ -28,5 +32,7 @@ RUN	apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 VOLUME /SQLAPI
 
-EXPOSE      6379
-ENTRYPOINT  ["/usr/bin/redis-server","/etc/redis/redis.conf"]
+WORKDIR /SQLAPI/CartoDB-SQL-API
+EXPOSE 8080
+
+CMD ["node", "app.js", "development"]
