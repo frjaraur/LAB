@@ -47,7 +47,7 @@ module.exports.db_pool_reapInterval = 1000;
 //    enabled: true,
 //    initialDelay: 5000
 //};
-module.exports.redis_host   = 'redis';
+module.exports.redis_host   = 'localhost';
 module.exports.redis_port   = 6379;
 module.exports.redisPool    = 50;
 module.exports.redisIdleTimeoutMillis   = 100;
