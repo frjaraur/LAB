@@ -1,7 +1,6 @@
 #
 ### CartoDB 
 #
-# I will use docker compose soon... when starting errors are solved ...
 
 docker run --name pgsql lab:pgsql
 docker run --name main --link pgsql:pgsql lab:main
