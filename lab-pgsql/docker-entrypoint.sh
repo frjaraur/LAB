@@ -1,112 +1,42 @@
 #!/bin/bash
 set -e
 
-set_listen_addresses() {
-	sedEscapedValue="$(echo "$1" | sed 's/[\/&]/\\&/g')"
-	sed -ri "s/^#?(listen_addresses\s*=\s*)\S+/\1'$sedEscapedValue'/" "$PGDATA/postgresql.conf"
-}
 
 if [ "$1" = 'postgres' ]; then
-	mkdir -p "$PGDATA"
-	chmod 700 "$PGDATA"
-	chown -R postgres "$PGDATA"
+	if [ "$2" = "first_start" -a ! -f ${PGDATA}/first_start_done ]
+	then
+			echo "Opening database Locally for some work ..."
+			
+			gosu postgres pg_ctl -D "${PGDATA}" -o "-c listen_addresses=''" -w start
+			
+			gosu postgres createuser publicuser --no-createrole --no-createdb --no-superuser -U postgres
+			
+			gosu postgres createuser tileuser --no-createrole --no-createdb --no-superuser -U postgres
+			
+			gosu postgres createdb -T template0 -O postgres -U postgres -E UTF8 template_postgis
+			
+			#gosu postgres createlang plpgsql -U postgres -d template_postgis
+			
+			gosu postgres psql -U postgres template_postgis -c 'CREATE OR REPLACE LANGUAGE plpgsql;'
+			
+			gosu postgres psql -U postgres template_postgis -c 'CREATE EXTENSION postgis;CREATE EXTENSION postgis_topology;'
+			
+			echo "Stopping Database For a Complete Start ... "
+			
+			gosu postgres pg_ctl -D "${PGDATA}" -m fast -w stop
+			
+			touch ${PGDATA}/first_start_done
+			
+	fi	
+			
+			echo "Starting PostgreSQL..."
+  			
+  			exec start-stop-daemon --start --chuid ${PG_USER}:${PG_USER} \
+   			--exec ${PG_BINDIR}/postgres -- -D ${PGDATA} 
+			
+			
+else
 
-	chmod g+s /run/postgresql
-	chown -R postgres /run/postgresql
+	exec "$@"
+fi	
 
-	# look specifically for PG_VERSION, as it is expected in the DB dir
-	if [ ! -s "$PGDATA/PG_VERSION" ]; then
-		gosu postgres initdb
-
-		# check password first so we can output the warning before postgres
-		# messes it up
-		if [ "$POSTGRES_PASSWORD" ]; then
-			pass="PASSWORD '$POSTGRES_PASSWORD'"
-			authMethod=md5
-		else
-			# The - option suppresses leading tabs but *not* spaces. :)
-			cat >&2 <<-'EOWARN'
-				****************************************************
-				WARNING: No password has been set for the database.
-				         This will allow anyone with access to the
-				         Postgres port to access your database. In
-				         Docker's default configuration, this is
-				         effectively any other container on the same
-				         system.
-
-				         Use "-e POSTGRES_PASSWORD=password" to set
-				         it in "docker run".
-				****************************************************
-			EOWARN
-
-			pass=
-			authMethod=trust
-		fi
-		
-		
-		#{ echo; echo "local all postgres 	trust"; } >> "$PGDATA/pg_hba.conf"
-		#{ echo; echo "local all all 	trust"; } >> "$PGDATA/pg_hba.conf"		
-		#{ echo; echo "host all all 127.0.0.1/32 trust"; } >> "$PGDATA/pg_hba.conf"
-		
-		#{ echo; echo "host all all 0.0.0.0/0 $authMethod"; } >> "$PGDATA/pg_hba.conf"
-		
-		{ echo; echo "shared_preload_libraries = 'schema_triggers.so'"; } >> "$PGDATA/postgresql.conf"
-
-		# internal start of server in order to allow set-up using psql-client		
-		# does not listen on TCP/IP and waits until start finishes
-		gosu postgres pg_ctl -D "$PGDATA" \
-			-o "-c listen_addresses=''" \
-			-w start
-
-		: ${POSTGRES_USER:=postgres}
-		: ${POSTGRES_DB:=$POSTGRES_USER}
-		export POSTGRES_USER POSTGRES_DB
-
-		if [ "$POSTGRES_DB" != 'postgres' ]; then
-			psql --username postgres <<-EOSQL
-				CREATE DATABASE "$POSTGRES_DB" ;
-			EOSQL
-			echo
-		fi
-
-		if [ "$POSTGRES_USER" = 'postgres' ]; then
-			op='ALTER'
-		else
-			op='CREATE'
-		fi
-
-		psql --username postgres <<-EOSQL
-			$op USER "$POSTGRES_USER" WITH SUPERUSER $pass ;
-		EOSQL
-		echo
-
-		echo
-		for f in /docker-entrypoint-initdb.d/*; do
-			case "$f" in
-				*.sh)  echo "$0: running $f"; . "$f" ;;
-				*.sql) 
-					echo "$0: running $f"; 
-					psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" < "$f"
-					echo 
-					;;
-				*)     echo "$0: ignoring $f" ;;
-			esac
-			echo
-		done
-
-		echo
-		echo 'Starting PostgreSQL...'
-		echo
-
-		gosu postgres pg_ctl -D "$PGDATA" -m fast -w stop
-		set_listen_addresses '*'
-
-		echo
-		echo 'PostgreSQL init process complete; ready for start up.'
-		echo
-	fi
-
-	exec gosu postgres "$@"
-fi
-
-exec "$@"
