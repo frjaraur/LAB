@@ -13,7 +13,7 @@ export RAILS_ENV=$ENVIRONMENT
 [ "$ACTION" = 'help' ] && echo "Help should be here :)"
 
 
-if [ "$ACTION" = 'start_all' -o "$1" = 'first_start' ];then
+if [ "$ACTION" = 'start_all' -o "$ACTION" = 'first_start' ];then
 
 	echo "Starting REDIS Server" 
 	/usr/bin/redis-server /REDIS/redis.conf
