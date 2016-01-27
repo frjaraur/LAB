@@ -1,0 +1,13 @@
+dn: dc=test,dc=cartodb
+dc: test
+objectClass: dcObject
+objectClass: organizationalUnit
+ou: test
+
+dn: ou=Users,dc=test,dc=cartodb
+objectClass: organizationalUnit
+ou: Users
+
+dn: ou=Organization,dc=test,dc=cartodb
+objectClass: organizationalUnit
+ou: Organization
