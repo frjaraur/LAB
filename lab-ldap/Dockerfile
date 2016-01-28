@@ -8,8 +8,8 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN groupadd -r openldap && useradd -r -g openldap openldap
 
 RUN apt-get update && \
-	echo 'slapd/root_password password changeme' | debconf-set-selections &&\
-    echo 'slapd/root_password_again password changeme' | debconf-set-selections && \
+	echo 'slapd/root_password changeme password' | debconf-set-selections &&\
+    echo 'slapd/root_password_again changeme password' | debconf-set-selections && \
 	apt-get install -y slapd ldap-utils supervisor &&\
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
