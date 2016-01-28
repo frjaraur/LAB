@@ -167,4 +167,4 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 
 EXPOSE 3000 6379 8080 8181 5432
 
-CMD [ "start_all" , "" ]
+CMD [ "start_all" , "" ,"bash"]
