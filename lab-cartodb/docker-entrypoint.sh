@@ -7,6 +7,8 @@ ACTION=$1
 
 ENVIRONMENT=$2
 
+INTERACTIVE=$3
+
 DEFAULT_ENVIRONMENT="development"
 
 [ "${ENVIRONMENT}" = "" ] && ENVIRONMENT=${DEFAULT_ENVIRONMENT}
@@ -177,6 +179,8 @@ Start_Resque(){
 	echo
 }
 
+
+
 case ${ACTION} in 
 
 	help)
@@ -221,9 +225,15 @@ case ${ACTION} in
 		[ -f ${DATABASE_INITIALIZED_FILE_FLAG} ] &&  rm -f ${FIRST_RUN_FILE_FLAG}
 	;;
 	
+	*)
+	
+		exec "$@"
+	;;
 esac
 
 
-exec "$@"
+
+
+exec "$INTERACTIVE"
 
 	
