@@ -4,8 +4,8 @@ export LC_ALL=C
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get purge -y slapd
-rm -rf /etc/ldap
-rm -rf /var/lib/ldap/
+rm -rf /etc/ldap/slapd/*
+rm -rf /var/lib/ldap/*
 
 
 echo "slapd slapd/root_password changeme password" |debconf-set-selections && \
@@ -26,7 +26,7 @@ apt-get install -y slapd
 
 service slapd restart
 
-ldapadd -Y EXTERNAL -H ldapi:/// -f ./backend.ldif
-ldapadd -Y EXTERNAL -H ldapi:/// -f ./sssvlv_load.ldif
-ldapadd -Y EXTERNAL -H ldapi:/// -f ./sssvlv_config.ldif
-ldapadd -x -D cn=admin,dc=cartodb,dc=com -w changeme -c -f ./frontend.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -f /ldap_utils/alcs.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -f /ldap_utils/sssvlv_load.ldif
+ldapadd -Y EXTERNAL -H ldapi:/// -f /ldap_utils/sssvlv_config.ldif
+ldapadd -x -D cn=admin,dc=cartodb,dc=com -w changeme -c -f /ldap_utils/objects.ldif

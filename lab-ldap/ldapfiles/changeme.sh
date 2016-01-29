@@ -10,6 +10,7 @@ echo
 /usr/sbin/slappasswd -h {SSHA} >/tmp/.newpasswd
 NEWPASSWD="$(cat /tmp/.newpasswd)"
 
+
 ROOTDN="$(awk '/olcRootDN/ { print $2 }' /tmp/.actualroot.ldif)"
 
 echo
@@ -38,3 +39,5 @@ EOF
 cat /tmp/.changerootpasswd_step2.ldif
 echo "ROOTDN ${ROOTDN}"
 /usr/bin/ldapmodify -H ldap:// -x -D "${ROOTDN}" -W -f  /tmp/.changerootpasswd_step2.ldif
+
+#rm -f  /tmp/.changerootpasswd_step2.ldif  /tmp/.changerootpasswd_step1.ldif /tmp/.newpasswd /tmp/.actualroot.ldif

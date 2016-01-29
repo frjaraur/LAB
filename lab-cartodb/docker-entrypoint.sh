@@ -105,24 +105,7 @@ Start_Postgresql(){
 
 Setup_CartoDB_Environment(){
 	cd ${CARTODBMAIN}
-	export SUBDOMAIN=development
-		
-	export PASSWORD="changeme"
-	export ADMIN_PASSWORD="changeme"
-	export EMAIL="admin@dummy.me"
-		
-	echo "PASSWORD: $PASSWORD"
-	echo "ADMIN_PASSWORD: $ADMIN_PASSWORD"
-	echo "EMAIL: $EMAIL"
-		
-    # Add entries to /etc/hosts needed in development
-	[ $(grep -c "${SUBDOMAIN}" /etc/hosts ) -eq 0 ] && echo "127.0.0.1 ${SUBDOMAIN}.localhost.lan" | tee -a /etc/hosts
-		
-	   
-	echo "Creating Development User ...."
-	bundle exec rake cartodb:db:create_dev_user SUBDOMAIN="${SUBDOMAIN}" \
-	PASSWORD="${PASSWORD}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
-	EMAIL="${EMAIL}"
+	
 }
 
 
@@ -136,35 +119,49 @@ Start_CartoDB(){
 
 Start_SQLAPI(){		
 	echo "Starting SQL API ...."
-	/usr/bin/node ${SQLAPI}/app.js &
+	/usr/bin/node ${SQLAPI}/app.js ${ENVIRONMENT} &
 	echo
 }
 
 Start_MAPSAPI(){	
 	echo "Starting MAPS API ...."
-	/usr/bin/node ${MAPAPI}/app.js &
+	/usr/bin/node ${MAPAPI}/app.js ${ENVIRONMENT} &
 	echo 
 }
 
-Setup_CartoDB_Database(){
+Setup_CartoDB(){
 
 	cd ${CARTODBMAIN}
 	echo "First RUN ...."
-	bundle exec rake cartodb:db:create_importer_schema
-	echo "Starting DB:MIGRATE ...."
-	bundle exec rake db:migrate  && ERRORS=$(( ERRORS + 1 ))
-	echo
-		
-		
-	echo "Starting DB:SETUP ...."	
-	bundle exec rake db:setup && ERRORS=$(( ERRORS + 1 ))
-	echo 
-		
-		
-	#[ ${ERRORS} -ne 0 ] && echo "ERRORS during first run... can not start CartoDB..." && exit 1 		
 	
-	touch ${FIRST_RUN_FILE_FLAG}
+	
+		
+	export PASSWORD="changeme"
+	export ADMIN_PASSWORD="changeme"
+	export EMAIL="dummy@dummy.me"
+	export USER="dummy"
+	export SUBDOMAIN=$USER
 
+		
+	echo "PASSWORD: $PASSWORD"
+	echo "ADMIN_PASSWORD: $ADMIN_PASSWORD"
+	echo "EMAIL: $EMAIL"
+		
+    # Add entries to /etc/hosts needed in development
+	[ $(grep -c "${SUBDOMAIN}" /etc/hosts ) -eq 0 ] && echo "127.0.0.1 ${SUBDOMAIN}.localhost.lan" | tee -a /etc/hosts
+		
+	   
+	echo "Creating Development User ...."
+	
+	bundle exec rake rake:db:create
+	bundle exec rake rake:db:migrate
+	bundle exec rake cartodb:db:create_publicuser
+	bundle exec rake cartodb:db:create_dev_user SUBDOMAIN="${SUBDOMAIN}" \
+	PASSWORD="${PASSWORD}" ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
+	EMAIL="${EMAIL}"
+	bundle exec rake cartodb:db:create_importer_schema
+	bundle exec rake cartodb:db:load_functions
+	
 }
 
 Start_RubyOnRailsServer(){	
@@ -196,12 +193,7 @@ case ${ACTION} in
 		Start_Redis
 		sleep 20
 		
-		[ ! -f ${FIRST_RUN_FILE_FLAG} ] && Setup_CartoDB_Database
-		sleep 20
-		
-		#Start_RubyOnRailsServer
-		
-		Setup_CartoDB_Environment
+		Setup_CartoDB
 		
 		Start_Resque
 				

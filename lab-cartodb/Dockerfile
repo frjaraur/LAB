@@ -51,8 +51,9 @@ RUN apt-get update && \
     postgresql-9.3 postgresql-contrib-9.3 postgresql-server-dev-9.3 postgresql-plpython-9.3 \
 	postgresql-9.3-pg-schema-triggers postgresql-9.3-plproxy proj proj-bin proj-data libproj-dev \
 	postgresql-server-dev-all libjson0 libjson0-dev python-simplejson libgeos-c1v5 libgeos-dev \
-	ogr2ogr2-static-bin libxml2-dev	liblwgeom-2.1.8  \
- 	postgresql-9.3-postgis-scripts zip wget ca-certificates net-tools iputils-ping  
+	ogr2ogr2-static-bin libxml2-dev	liblwgeom-2.1.8 postgresql-9.3-postgis-scripts zip wget ca-certificates \
+ 	net-tools iputils-ping ldap-utils   
+
 #postgis postgresql-9.3-postgis-2.2
 ##Postgis madness
 

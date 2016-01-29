@@ -1,19 +1,64 @@
 #!/bin/bash
 set -e
-o
-echo "starting slapd"
-/usr/sbin/slapd -h "ldap:///" -u openldap -g openldap -d 0
-service supervisor start
-echo "Load default ldap domain ... [cartodb.com] "
-ldapadd -Y EXTERNAL -H ldapi:/// -f /tmp/backend.ldif
-ldapadd -Y EXTERNAL -H ldapi:/// -f /tmp/sssvlv_load.ldif
-ldapadd -Y EXTERNAL -H ldapi:/// -f /tmp/sssvlv_config.ldif
-ldapadd -x -D cn=admin,dc=cartodb,dc=com -w changeme -c -f /tmp/objects.ldif
 
-echo "Remember to change admin initial password 'changeme' ... "
+ACTION=$1
 
-echo
-echo "Starting own command ..."
-echo
-exec "$@"
+[ "$ACTION" = "help" ] && echo "Run first with 'changeme' interactive for changing default password" && echo "Then just start as daemon" &&\
+echo "Use recreatedb for recreate ldap configuration from the begining interactive" 
 
+
+FirstRun(){
+	echo "starting slapd"
+	
+	#/usr/sbin/slapd -h "ldap:///" -u openldap -g openldap -d 0
+	
+	service slapd restart
+	
+	echo "Load default ldap domain ... [cartodb.com] "
+	echo
+	echo "ACLs..........."
+	echo
+	ldapadd -Y EXTERNAL -H ldapi:/// -f /ldap_utils/acls.ldif
+		
+	echo
+	echo "Frontend Objects ..........."
+	echo
+	ldapadd -x -D cn=admin,dc=cartodb,dc=com -w password -c -f /ldap_utils/objects.ldif
+	pkill slapd
+
+}
+
+
+Setup(){
+		/ldap_utils/changeme.sh
+		touch $LDAPDATA/.changed
+}
+
+
+[ ! -f $LDAPDATA/.changed ] && echo "Remember to change admin initial password 'password' ... "
+
+
+case $ACTION in 
+	
+	daemon)
+		FirstRun
+		supervisord -n -c /etc/supervisor/supervisord.conf
+		
+	;;
+	setup)
+		FirstRun
+		Setup
+		supervisord -n -c /etc/supervisor/supervisord.conf
+	;;	
+	
+	recreatedb)
+		/ldap_utils/recreate_ldap.sh
+		[ -f $LDAPDATA/.changed ] && rm -f $LDAPDATA/.changed
+		/ldap_utils/changeme.sh
+		touch $LDAPDATA/.changed
+		
+	;;
+	*)	
+		exec "$@"
+	;;
+esac
